@@ -27,12 +27,10 @@ import javax.swing.Timer;
  */
 public class SudokuPlayer {
 
-    private Random rand;
     private JFrame frame;
     private SudokuBoard sb;
 
     public SudokuPlayer() {
-        this.rand = new Random();
         this.frame = new JFrame();
         this.frame.setTitle("SudokuSolver");
         this.sb = new SudokuBoard();
@@ -80,7 +78,7 @@ public class SudokuPlayer {
                 return false;
             }
             Location loc = (Location) obj;
-            
+
             return this.x == loc.x && this.y == loc.y;
         }
 
@@ -156,69 +154,57 @@ public class SudokuPlayer {
                 for (int x = 0; x < this.board.length; x++) {
                     try {
                         // for every column
-                        Thread.sleep(100);
+                        Thread.sleep(50);
                     } catch (InterruptedException ex) {
                         System.out.println("Interrupted!");
                     }
                     this.repaint();
                     this.revalidate();
-                    stack.push(new Location(x, y)); // push the current x y to the stack so that we know we have visited here.
+                    // check whether the location is currently in the stack
                     if (!this.board[x][y].isFixed()) { // make sure that the current location is able to be changed.
+                        stack.push(new Location(x, y)); // push the current x y to the stack so that we know we have visited here.
                         int arbitrary;
                         if (this.board[x][y].getValue() == 0) {
                             arbitrary = 1;
                         } else {
                             arbitrary = this.board[x][y].getValue() + 1;
                         }
-                        while (arbitrary <= 9) {
+                        while (arbitrary < 10) {
                             //Check whether the "arbitrary" variable is an acceptable number
                             // variables for conditions - assume that our arbitrary can be placed until proven otherwise
                             boolean rows = true;
                             boolean cols = true;
                             boolean box = true;
                             //check rows
-                            int row = 0;
-                            while (row < this.board.length) {
+                            for (int row = 0; row < this.board.length; row++) {
                                 if (this.board[x][row].getValue() == arbitrary) {
                                     rows = false;
                                     break;
                                 }
-                                row++;
                             }
                             //check cols
-                            int col = 0;
-                            while (col < this.board.length) {
+                            for (int col = 0; col < this.board.length; col++) {
                                 if (this.board[col][y].getValue() == arbitrary) {
                                     cols = false;
                                     break;
                                 }
-                                col++;
                             }
                             //check box (bound will define up to which element we need to iterate
                             int boundX = this.roundTo(x);
                             int boundY = this.roundTo(y);
-                            int xTemp = boundX - 3;
-                            int yTemp = boundY - 3;
-                            System.out.println("YTEMP: " + yTemp);
-                            System.out.println("YTEMPBOUND: " + boundY);
                             boolean okay = true;
-                            System.out.println("START");
-                            while (yTemp < boundY) {
-                                while (xTemp < boundX) {
-                                    System.out.println(xTemp + " " + yTemp);
+                            for (int yTemp = boundY - 3; yTemp < boundY; yTemp++) {
+                                for (int xTemp = boundX - 3; xTemp < boundX; xTemp++) {
                                     if (this.board[xTemp][yTemp].getValue() == arbitrary) {
                                         box = false;
                                         okay = false;
                                         break;
                                     }
-                                    xTemp++;
                                 }
-                                if(!okay){
+                                if (!okay) {
                                     break;
                                 }
-                                yTemp++;
                             }
-                            System.out.println("FINISH");
                             // if all are satisfied
                             if (cols && rows && box) {
                                 this.board[x][y].setValue(arbitrary);
@@ -229,8 +215,13 @@ public class SudokuPlayer {
                             if (arbitrary > 9) { // go back to the previous location in the stack
                                 this.board[x][y].setValue(0);
                                 stack.pop();
+                                stack.pop();
                                 x = stack.peek().getX();
                                 y = stack.peek().getY();
+//                                for (Location location : stack) {
+//                                    System.out.println(location.getX() + "," + location.getY());
+//                                }
+//                                System.out.println("FINISH");
                                 break;
                             }
                         }
@@ -358,6 +349,8 @@ public class SudokuPlayer {
             this.board[0][5].setFixed(true);
             this.board[4][3].setValue(6);
             this.board[4][3].setFixed(true);
+            this.board[3][4].setValue(8);
+            this.board[3][4].setFixed(true);
         }
 
         private void drawGridLines(Graphics2D g2d) {
