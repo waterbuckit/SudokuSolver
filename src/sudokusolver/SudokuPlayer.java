@@ -51,6 +51,11 @@ public class SudokuPlayer {
         private int x;
         private int y;
 
+        public Location(Location loc) {
+            this.x = loc.getX();
+            this.y = loc.getY();
+        }
+
         public Location(int x, int y) {
             this.x = x;
             this.y = y;
@@ -112,6 +117,25 @@ public class SudokuPlayer {
             }
         }
 
+        private boolean checkBox(int boundX, int boundY, int i) {
+            for(int yTemp = 0; yTemp < 3; yTemp++){
+                for(int xTemp = 0; xTemp < 3; xTemp++){
+                    if(this.board[xTemp+boundX][yTemp+boundY].getValue() == i){
+                        return false;
+                    }
+                }
+            }
+            return true;
+//            for (int yTemp = boundY - 3; yTemp < boundY; yTemp++) {
+//                for (int xTemp = boundX - 3; xTemp < boundX; xTemp++) {
+//                    if (this.board[xTemp][yTemp].getValue() == i) {
+//                        return false;
+//                    }
+//                }
+//            }
+//            return true;
+        }
+
         private class Cell {
 
             private boolean fixed;
@@ -148,13 +172,91 @@ public class SudokuPlayer {
             this.drawNumbers(g2d);
         }
 
+        private boolean backTrack() {
+            Location loc = new Location(this.findBlankCell());
+            if (loc.getX() == -1) { // if there are no blank cells then we must have finished so we can just return true.
+                return true;
+            }
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException ex) {
+                System.out.println("Interrupted!");
+            }
+            for (int i = 1; i <= 9; i++) {
+                // we need to ensure that the number we want to put in is valid.
+                if (isValid(loc.getX(), loc.getY(), i)) {
+                    this.board[loc.getX()][loc.getY()].setValue(i);
+                    this.repaint();
+                    this.revalidate();
+                    if (backTrack()) { // recursively call this until there are no blank cells.
+                        return true;
+                    }
+                    // if the number didn't work, we set the value to 0, try a different number
+                    this.board[loc.getX()][loc.getY()].setValue(0);
+                    this.repaint();
+                    this.revalidate();
+                }
+            }
+            // if all the numbers we tried don't work then we go back.
+            return false;
+        }
+
+        private boolean isValid(int x, int y, int i) {
+            // we need to check the row, column, and box!
+            boolean rows = true;
+            boolean cols = true;
+            boolean box = true;
+            //check rows
+            for (int row = 0; row < this.board.length; row++) {
+                if (this.board[x][row].getValue() == i) {
+                    rows = false;
+                    break;
+                }
+            }
+            //check cols
+            for (int col = 0; col < this.board.length; col++) {
+                if (this.board[col][y].getValue() == i) {
+                    cols = false;
+                    break;
+                }
+            }
+            //check box (bound will define up to which element we need to iterate
+//            box = checkBox(roundTo(x), roundTo(y), i);
+            box = checkBox(x - x % 3, y - y % 3,i);
+//            for (int yTemp = boundY - 3; yTemp < boundY; yTemp++) {
+//                for (int xTemp = boundX - 3; xTemp < boundX; xTemp++) {
+//                    if (this.board[xTemp][yTemp].getValue() == i) {
+//                        box = false;
+//                        okay = false;
+//                        break;
+//                    }
+//                }
+//                if (!okay) {
+//                    break;
+//                }
+//            }
+            // if all are satisfied
+            return cols && rows && box;
+        }
+
+        private Location findBlankCell() {
+            for (int y = 0; y < this.board.length; y++) {
+                for (int x = 0; x < this.board.length; x++) {
+                    if (this.board[x][y].getValue() == 0 && !this.board[x][y].isFixed()) {
+                        return new Location(x, y);
+                    }
+                }
+            }
+            return new Location(-1, -1); // return -1 if there are no blank cells
+        }
+
         private void manipulateBoardBacktrack() {
             Stack<Location> stack = new Stack<>(); // stack of all previous locations so that we can backtrack later on.
             for (int y = 0; y < this.board.length; y++) { // for every row
                 for (int x = 0; x < this.board.length; x++) {
                     try {
                         // for every column
-                        Thread.sleep(50);
+                        Thread.sleep(10);
                     } catch (InterruptedException ex) {
                         System.out.println("Interrupted!");
                     }
@@ -216,6 +318,8 @@ public class SudokuPlayer {
                                 this.board[x][y].setValue(0);
                                 stack.pop();
                                 stack.pop();
+                                // set the loop to be looking at the elements that are in the element previous to the top of the stack 
+                                // the stack should had the element that could not be represented in the current position at the top.
                                 x = stack.peek().getX();
                                 y = stack.peek().getY();
 //                                for (Location location : stack) {
@@ -300,7 +404,12 @@ public class SudokuPlayer {
 //        }
 
         private void startSolvingBoard() {
-            this.manipulateBoardBacktrack();
+            if(this.backTrack());
+            else{
+                System.out.println("No solution!");
+            }
+//            this.manipulateBoardBacktrack();
+
             // board will be manipulated once per second
             // There should only be one element manipulated at a time.
 //            Timer time = new Timer(delay, (ActionEvent arg0) -> {
@@ -351,6 +460,36 @@ public class SudokuPlayer {
             this.board[4][3].setFixed(true);
             this.board[3][4].setValue(8);
             this.board[3][4].setFixed(true);
+            this.board[8][3].setValue(3);
+            this.board[8][3].setFixed(true);
+            this.board[8][4].setValue(1);
+            this.board[8][4].setFixed(true);
+            this.board[8][5].setValue(6);
+            this.board[8][5].setFixed(true);
+            this.board[5][4].setValue(3);
+            this.board[5][4].setFixed(true);
+            this.board[4][5].setValue(2);
+            this.board[4][5].setFixed(true);
+            this.board[1][6].setValue(6);
+            this.board[1][6].setFixed(true);
+            this.board[3][7].setValue(4);
+            this.board[3][7].setFixed(true);
+            this.board[4][7].setValue(1);
+            this.board[4][7].setFixed(true);
+            this.board[5][7].setValue(9);
+            this.board[5][7].setFixed(true);
+            this.board[4][8].setValue(8);
+            this.board[4][8].setFixed(true);
+            this.board[6][6].setValue(2);
+            this.board[6][6].setFixed(true);
+            this.board[7][6].setValue(8);
+            this.board[7][6].setFixed(true);
+            this.board[7][8].setValue(7);
+            this.board[7][8].setFixed(true);
+            this.board[8][8].setValue(9);
+            this.board[8][8].setFixed(true);
+            this.board[8][7].setValue(5);
+            this.board[8][7].setFixed(true);
         }
 
         private void drawGridLines(Graphics2D g2d) {
